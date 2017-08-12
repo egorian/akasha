@@ -4,6 +4,7 @@ class device
 {
 	protected $name;
 	protected $id;
+	protected $local_id;
 	protected $commands;
 	protected $device_type;
 
@@ -25,6 +26,16 @@ class device
 	public function set_id($arg)
 	{
 		$this->id = $arg;
+	}
+
+	public function get_local_id()
+	{
+		return $this->local_id;
+	}
+
+	public function set_local_id($arg)
+	{
+		$this->local_id = $arg;
 	}
 
 	public function get_device_type()

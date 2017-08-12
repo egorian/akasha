@@ -114,5 +114,4 @@ if ($found_device)
 	echo "ERROR: Device not found: $recipient_device" . PHP_EOL;
 	exit(1);
 }
-
 ?>

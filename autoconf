@@ -81,8 +81,42 @@ function get_password($stars = false)
 	return $password;
 }
 
+function get_local_access_token($refresh_token,$local_control_id)
+{
+	$client_id = "quirky_wink_android_app";
+        $client_secret = "e749124ad386a5a35c0ab554a4f2c045";
+
+	$auth= array(
+		'client_id' => $client_id,
+		'client_secret' => $client_secret,
+		'grant_type' => 'refresh_token',
+		'refresh_token' => $refresh_token,
+		'scope' => 'local_control',
+		'local_control_id' => $local_control_id
+	);
+
+	$post_auth = json_encode($auth);
+
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, "https://api.wink.com/oauth2/token");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	curl_setopt($ch, CURLOPT_HEADER, FALSE);
+	curl_setopt($ch, CURLOPT_POST, TRUE);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_auth);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+
+	$response = curl_exec($ch);
+	curl_close($ch);
+
+	$json = json_decode($response,true);
+	return @$json['data']['access_token'];
+
+}
+
 @$access_token = $config["wink"]["token_access"];
 @$refresh_token = $config["wink"]["token_refresh"];
+@$local_access_token = $config["wink"]["local_access_token"];
+
 if (!@$access_token || !($json = get_devices($access_token)))
 {
 	if (!isset($user))
@@ -131,6 +165,7 @@ $config_content .= PHP_EOL;
 $config_content .= '$config = array();' . PHP_EOL;
 $config_content .= '$config["wink"]["token_access"] =  "' . $access_token  . "\";" . PHP_EOL;
 $config_content .= '$config["wink"]["token_refresh"] = "' . $refresh_token . "\";" . PHP_EOL;
+$config_content .= '$config["wink"]["URL"] = "https://api.wink.com/";' . PHP_EOL;
 $config_content .= PHP_EOL;
 $config_content .= '$wink_devices = array();' . PHP_EOL;
 
@@ -141,6 +176,7 @@ foreach($json['data'] as $element)
 	$name = str_replace(" ", "", $name);
 	$has_parent = array_key_exists('parent_object_id', $element);
 	$upc_code = @$element['upc_code'];
+	$local_id = @$element['local_id'];
 	$idfield = "";
 	$id = "";
 	$type = "";
@@ -161,14 +197,38 @@ foreach($json['data'] as $element)
 	$tidf_arr = WinkUtils::get_info_from_model($model_name);
 	$type = $tidf_arr["type"];
 	$idfield = $tidf_arr["idfield"];
+	$local_access_enabled = $tidf_arr["localaccessenabled"];
 
 	if (array_key_exists($idfield, $element))
 	{
 		$id = $element[$idfield];
-		$config_content .= '$wink_devices[] = WinkUtils::new_device("' . $model_name . '", ' . $id .', "' . $name . '");' . PHP_EOL;
+		$config_content .= '$wink_devices[] = WinkUtils::new_device("' . $model_name . '", ' . $id .', "' . $name . '"'. ($local_access_enabled ? ', '. $local_id : '') .');' . PHP_EOL;
 	} else {
 		$config_content .= "//Unknown device type \"$model_name\", named \"$name\"" . PHP_EOL;
 	}
+
+	if($type=="hub")  //Get local_control_id
+	{
+		@$local_control_id = $element['last_reading']['local_control_id'];
+		@$ip_address = $element['last_reading']['ip_address'];
+	}
+
+}
+
+if (!@$local_access_token && @$local_control_id)
+{
+	$local_access_token=get_local_access_token($refresh_token,$local_control_id);
+}
+
+if(@$local_access_token)
+{
+	$config_content .= '$config["wink"]["local_access_token"] = "' . $local_access_token . '"; ' . PHP_EOL;
+}
+
+if(@$ip_address)
+{
+	$config_content .= '$config["wink"]["HUB_URL"] = "https://' . $ip_address . ':8888";' . PHP_EOL;
+	$config_content .= '$config["wink"]["local_access_enabled"] = false; //Change this setting to true if want to try hub local access' . PHP_EOL;
 }
 
 $config_content .= '?>' . PHP_EOL;

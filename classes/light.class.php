@@ -90,10 +90,19 @@ class light extends wink_device
 						);
 						$endpoint = "/light_bulbs/" . $this->id;
 						$json_data = json_encode($colorData);
-						WinkUtils::api_put($endpoint, $json_data);
+		                                $localendpoint = NULL;
+                 		                $try_local = false;
+
+		                                if($this->is_local_access_capable())
+		                                {
+		                                        $localendpoint = "/light_bulbs/" . $this->local_id;
+		                                        $try_local=true;
+		                                }
+
+						WinkUtils::api_put($endpoint, $json_data,$localendpoint,$try_local);
 					}
 
-					$colorParam = "white";
+/*					$colorParam = "white";
 					$colorObj = new Color();
 					$colorObj->setColor($colorParam);
 					$color=$colorObj->getHSB();
@@ -106,6 +115,7 @@ class light extends wink_device
 					$endpoint = "/light_bulbs/" . $this->id;
 					$json_data = json_encode($colorData);
 					WinkUtils::api_put($endpoint, $json_data);
+*/
 				}
 
 				$data = array("desired_state" => array(
@@ -115,8 +125,16 @@ class light extends wink_device
 
 				$endpoint = "/light_bulbs/" . $this->id;
 				$json_data = json_encode($data);
+				$localendpoint = NULL;
+				$try_local = false;
 
-				return WinkUtils::api_put($endpoint, $json_data);
+				if($this->is_local_access_capable())
+				{
+					$localendpoint = "/light_bulbs/" . $this->local_id;
+					$try_local=true;
+				}
+
+				return WinkUtils::api_put($endpoint, $json_data,$localendpoint,$try_local);
 				break;
 
 			case "poweroff":
@@ -133,8 +151,16 @@ class light extends wink_device
 
 				$endpoint = "/light_bulbs/" . $this->id;
 				$json_data = json_encode($data);
+                                $localendpoint = NULL;
+                                $try_local = false;
 
-				return WinkUtils::api_put($endpoint, $json_data);
+                                if($this->is_local_access_capable())
+                                {
+                                        $localendpoint = "/light_bulbs/" . $this->local_id;
+                                        $try_local=true;
+                                }
+
+				return WinkUtils::api_put($endpoint, $json_data,$localendpoint,$try_local);
 				break;
 			case "getstate":
 				$endpoint = "/light_bulbs/" . $this->id;

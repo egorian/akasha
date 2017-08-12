@@ -11,6 +11,7 @@ class ge_zigbee_light extends light
 		$this->wink_type = "light_bulb";
 		$this->wink_idfield = "light_bulb_id";
 		$this->device_type = "GE Light Bulb";
+		$this->local_access_capable = true;
 	}
 }
 

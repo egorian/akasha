@@ -15,6 +15,7 @@ class sylvania_sylvania_rgbw_flex extends light
 			"required" => array(),
 			"optional" => array("intensity","color")
 			);
+                $this->local_access_capable = true;
 	}
 }
 
