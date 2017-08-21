@@ -11,6 +11,8 @@ require_once("devices/linear_wadwaz_1.class.php");
 require_once("devices/linear_wapirz_1.class.php");
 require_once("devices/generic_zwave_thermostat.class.php");
 require_once("devices/hub_2.class.php");
+require_once("devices/ge_jasco-dimmer-in-wall.class.php");
+require_once("devices/lutron_p-pkg1w-wh-d.class.php");
 
 class WinkUtils extends device
 {
@@ -73,7 +75,19 @@ class WinkUtils extends device
 				$obj->set_local_id($local_id);
 				$obj->set_name($name);
 				break;
-			case "Z-Wave Door / Window Transmitter":
+			case "In-Wall Smart Dimmer":
+				$obj = new ge_jasco_dimmer_in_wall();
+				$obj->set_id($id);
+				$obj->set_local_id($local_id);
+				$obj->set_name($name);
+				break;
+			case "Caseta Wireless Dimmer & Pico":
+				$obj = new lutron_p_pkg1w_wh_d();
+				$obj->set_id($id);
+				$obj->set_local_id($local_id);
+				$obj->set_name($name);
+				break;
+			case "Door / Window Sensor":
 				$obj = new linear_wadwaz_1();
 				$obj->set_id($id);
 				$obj->set_local_id($local_id);
@@ -128,6 +142,8 @@ class WinkUtils extends device
 			case "Cree light bulb":
 			case "Lightify Smart+ RGBW Bulb":
 			case "Generic Z-Wave Light Bulb":
+			case "In-Wall Smart Dimmer":
+			case "Caseta Wireless Dimmer & Pico":
 			case "Dimmer":
 				$type = "light_bulb";
 				$idfield = $type . "_id";
@@ -157,7 +173,7 @@ class WinkUtils extends device
 				$type = "siren";
 				$idfield = $type . "_id";
 				break;
-			case "Z-Wave Door / Window Transmitter":
+			case "Door / Window Sensor":
 				$type = "sensor_pod";
 				$idfield = $type . "_id";
 				break;
