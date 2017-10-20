@@ -231,6 +231,7 @@ class WinkUtils extends device
 			curl_setopt($ch, CURLOPT_URL, $URL . $localendpoint);
 		        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);   //Have to ignore the Hub SSL Cert
 		        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			echo "Trying local";
 
 		}
 		else
@@ -247,17 +248,48 @@ class WinkUtils extends device
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", "Authorization: Bearer " . $token));
 		$response = curl_exec($ch);
+		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+echo "Code".$http_code;
 		if (!curl_errno($ch)) {   //Local Hub responded but have to verify the response code.
-			switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-			    case 200:  // OK
+			switch ($http_code) {
+			    case 200:  // OK, we need to inform the Cloud about the local action https://github.com/KraigM/homebridge-wink/wiki/Investigation-of-an-Unofficial-Wink-API
+				       //https://github.com/KraigM/homebridge-wink/pull/81
+				      //https://github.com/KraigM/homebridge-wink/blob/8f4a717b42d8dabb4778c9c3975969056198ef3d/lib/winkapi.js  Line 157
+				if(($config['wink']['local_access_enabled']==true)&&($try_local))
+				{
+					$obj=json_decode($data,true);
+					$nonce=$obj["nonce"];
+
+					$CloudData = explode("/",$endpoint);  $CloudData[1]=substr(trim($CloudData[1]), 0, -1);
+					$CloudDataArray = array(
+						"locally_activated_objects" => array(
+							"object_type" => $CloudData[1],
+							"object_id" => $CloudData[2]
+						),
+						"nonce" => $nonce
+					);
+
+//				$json_data = json_encode(array_merge($CloudDataArray,json_decode($data,true)));
+//   			   	$response=self::api_put($endpoint, $json_data);
+	   			   	$response=self::api_put($endpoint, json_encode($CloudDataArray));
+					echo "Local!!:"; var_dump($response);
+				}
 			      break;
 			    default:
 				if($try_local)  //Failed to make the request to the local hub, so we have to retry pointing to the cloud server.
-				{
-					$response=self::api_put($endpoint, $data);
+				{  echo "Not local".$http_code;
+				   $response=self::api_put($endpoint, $data);
 				}
 			  }
-		} else $response=self::api_put($endpoint, $data);   //Local Hub not responding, retrying to the cloud.
+		} else
+		{
+		$config_file = "config.php";
+                $str=file_get_contents($config_file);
+                $str=str_replace('$config["wink"]["local_access_enabled"] = true;', '$config["wink"]["local_access_enabled"] = false;',$str);
+                file_put_contents($config_file, $str);
+
+		 $response=self::api_put($endpoint, $data);   //Local Hub not responding, retrying to the cloud.
+		}
 		curl_close($ch);
 
 		return $response;

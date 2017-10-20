@@ -82,11 +82,14 @@ class light extends wink_device
 						$colorObj = new Color();
 						$colorObj->setColor($colorParam);
 						$color=$colorObj->getHSB();
-						$colorData = array("desired_state" => array(
-							"color_model" => "hsb",
-							"hue" => $color["hue"],
-							"saturation" => $color["saturation"],
-							"brightness" => $color["brightness"])
+						$colorData = array(
+							"desired_state" => array(
+								"color_model" => "hsb",
+								"hue" => $color["hue"],
+								"saturation" => $color["saturation"],
+								"brightness" => $color["brightness"]),
+		                                        "nonce" => time()
+
 						);
 						$endpoint = "/light_bulbs/" . $this->id;
 						$json_data = json_encode($colorData);
@@ -120,7 +123,8 @@ class light extends wink_device
 
 				$data = array("desired_state" => array(
 					"powered" => true,
-					"brightness" => $intensity)
+					"brightness" => $intensity),
+                                        "nonce" => time()
 				);
 
 				$endpoint = "/light_bulbs/" . $this->id;
@@ -146,7 +150,8 @@ class light extends wink_device
 
 				$data = array("desired_state" => array(
 					"powered" => false,
-					"brightness" => $intensity)
+					"brightness" => $intensity),
+					"nonce" => time()
 				);
 
 				$endpoint = "/light_bulbs/" . $this->id;
